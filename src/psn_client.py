@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime, timezone
 from functools import partial
 from typing import List, NewType
 
@@ -33,6 +34,11 @@ PLAYED_GAME_LIST_URL = PLAYED_GAME_LIST_URL.format(size=DEFAULT_LIMIT)
 
 UnixTimestamp = NewType("UnixTimestamp", int)
 
+def parse_timestamp(earned_date) -> UnixTimestamp:
+    date_format = "%Y-%m-%dT%H:%M:%S.%fZ" if '.' in earned_date else "%Y-%m-%dT%H:%M:%SZ"
+    dt = datetime.strptime(earned_date, date_format)
+    dt = datetime.combine(dt.date(), dt.time(), timezone.utc)
+    return UnixTimestamp(int(dt.timestamp()))
 
 class PSNClient:
     def __init__(self, http_client):
@@ -125,7 +131,7 @@ class PSNClient:
             try:
                 games = response['data']['gameLibraryTitlesRetrieve']['games']
                 return [
-                    {"titleId": title["titleId"], "name": title["name"]} for title in games
+                    {"titleId": title["titleId"], "name": title["name"], "lastPlayedDateTime": title["lastPlayedDateTime"]} for title in games
                 ] if games else []
             except (KeyError, TypeError) as e:
                 raise UnknownBackendResponse(e)

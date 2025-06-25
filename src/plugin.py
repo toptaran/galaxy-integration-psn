@@ -5,12 +5,11 @@ from typing import List, Any, AsyncGenerator
 from galaxy.api.consts import Platform, LicenseType
 from galaxy.api.errors import InvalidCredentials
 from galaxy.api.plugin import Plugin, create_and_run_plugin
-from galaxy.api.types import Authentication, Game, NextStep, SubscriptionGame, \
-    Subscription, LicenseInfo
+from galaxy.api.types import Authentication, Game, GameTime, NextStep, SubscriptionGame, Subscription, LicenseInfo
 
 from http_client import HttpClient
 from http_client import OAUTH_LOGIN_URL, OAUTH_LOGIN_REDIRECT_URL
-from psn_client import PSNClient
+from psn_client import PSNClient, parse_timestamp
 
 from version import __version__
 
@@ -76,6 +75,18 @@ class PSNPlugin(Plugin):
 
     async def get_subscription_games(self, subscription_name: str, context: Any) -> AsyncGenerator[List[SubscriptionGame], None]:
         yield await self._psn_client.get_subscription_games()
+
+    async def prepare_game_times_context(self, game_ids: List[str]) -> Any:
+        return {game['titleId']: game for game in await self._psn_client.async_get_played_games()}
+
+    async def get_game_time(self, game_id: str, context: Any) -> GameTime:
+        time_played, last_played_game = None, None
+        try:
+            game = context[game_id]
+            last_played_game = parse_timestamp(game['lastPlayedDateTime'])
+        except KeyError as e:
+            logger.debug(f'KeyError: {e}')
+        return GameTime(game_id, time_played, last_played_game)
 
     async def get_owned_games(self):
         def game_parser(title):
