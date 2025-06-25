@@ -13,19 +13,21 @@ from parsers import PSNGamesParser
 GAME_LIST_URL = "https://web.np.playstation.com/api/graphql/v1/op" \
                 "?operationName=getPurchasedGameList" \
                 '&variables={{"isActive":true,"platform":["ps3","ps4","ps5"],"start":{start},"size":{size},"subscriptionService":"NONE"}}' \
-                '&extensions={{"persistedQuery":{{"version":1,"sha256Hash":"2c045408b0a4d0264bb5a3edfed4efd49fb4749cf8d216be9043768adff905e2"}}}}'
+                '&extensions={{"persistedQuery":{{"version":1,"sha256Hash":"827a423f6a8ddca4107ac01395af2ec0eafd8396fc7fa204aaf9b7ed2eefa168"}}}}'
 
 PLAYED_GAME_LIST_URL = "https://web.np.playstation.com/api/graphql/v1/op" \
                        "?operationName=getUserGameList" \
                        '&variables={{"categories":"ps3_game,ps4_game,ps5_native_game","limit":{size}}}' \
-                       '&extensions={{"persistedQuery":{{"version":1,"sha256Hash":"e780a6d8b921ef0c59ec01ea5c5255671272ca0d819edb61320914cf7a78b3ae"}}}}'
+                       '&extensions={{"persistedQuery":{{"version":1,"sha256Hash":"e0136f81d7d1fb6be58238c574e9a46e1c0cc2f7f6977a08a5a46f224523a004"}}}}'
 
 USER_INFO_URL = "https://web.np.playstation.com/api/graphql/v1/op" \
                 "?operationName=getProfileOracle" \
                 "&variables={}" \
-                '&extensions={"persistedQuery":{"version":1,"sha256Hash":"c17b8b45ac988fec34e6a833f7a788edf7857c900fc3dc116585ced48577fb05"}}'
+                '&extensions={"persistedQuery":{"version":1,"sha256Hash":"fc0d765f537f3dce3e0d91c71e85daa401042ba43066acde9f8f584faced10df"}}'
 
 PSN_PLUS_SUBSCRIPTIONS_URL = 'https://store.playstation.com/subscriptions'
+
+HEADERS = {"content-type": "application/json", "apollographql-client-name": "oracle-web-toolbar"}
 
 DEFAULT_LIMIT = 100
 
@@ -96,7 +98,7 @@ class PSNClient:
                        response["data"]["oracleUserProfileRetrieve"]["onlineId"]
             except (KeyError, TypeError) as e:
                 raise UnknownBackendResponse(e)
-        return await self.fetch_data(user_info_parser, USER_INFO_URL)
+        return await self.fetch_data(user_info_parser, USER_INFO_URL, headers=HEADERS)
 
     async def get_psplus_status(self) -> bool:
 
@@ -109,7 +111,7 @@ class PSNClient:
             except (KeyError, TypeError) as e:
                 raise UnknownBackendResponse(e)
 
-        return await self.fetch_data(user_subscription_parser, USER_INFO_URL)
+        return await self.fetch_data(user_subscription_parser, USER_INFO_URL, headers=HEADERS)
 
     async def get_subscription_games(self) -> List[SubscriptionGame]:
         return await self.fetch_data(PSNGamesParser().parse, PSN_PLUS_SUBSCRIPTIONS_URL, get_json=False, silent=True)
@@ -124,7 +126,7 @@ class PSNClient:
             except (KeyError, TypeError) as e:
                 raise UnknownBackendResponse(e)
 
-        return await self.fetch_paginated_data(games_parser, GAME_LIST_URL, "purchasedTitlesRetrieve", "totalCount")
+        return await self.fetch_paginated_data(games_parser, GAME_LIST_URL, "purchasedTitlesRetrieve", "totalCount", DEFAULT_LIMIT, headers=HEADERS)
 
     async def async_get_played_games(self):
         def games_parser(response):
@@ -136,4 +138,4 @@ class PSNClient:
             except (KeyError, TypeError) as e:
                 raise UnknownBackendResponse(e)
 
-        return await self.fetch_data(games_parser, PLAYED_GAME_LIST_URL)
+        return await self.fetch_data(games_parser, PLAYED_GAME_LIST_URL, headers=HEADERS)
