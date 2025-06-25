@@ -47,7 +47,8 @@ class PSNPlugin(Plugin):
     async def authenticate(self, stored_credentials=None):
         stored_cookies = stored_credentials.get("cookies") if stored_credentials else None
         if not stored_cookies:
-            return NextStep("web_session", AUTH_PARAMS)
+            #return NextStep("web_session", AUTH_PARAMS)
+            stored_cookies = {"npsso": "<64 character npsso code>"}
 
         auth_info = await self._do_auth(stored_cookies)
         return auth_info
