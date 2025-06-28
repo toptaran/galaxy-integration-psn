@@ -36,7 +36,7 @@ JS = {r"^https://my\.account\.sony\.com/.*": [
          r'''
                  document.body.innerHTML = '';
                  setTimeout(() => {
-                     document.write('<body bgcolor="FFFFFF" style="padding: 30px;">' +'
+                     document.write('<body bgcolor="FFFFFF" style="padding: 30px;">' +
                      '<center><form novalidate="" action="https://www.playstation.com/">' +
                      '<span style="text-decoration: none; display: inline-block; font-size: 16px; font-weight: bold;' +
                      'margin: 4px;">FINISH AUTH PROCESS AT ANOTHER WINDOW AND CLICK NEXT</span>' +
