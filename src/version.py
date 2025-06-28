@@ -1,7 +1,14 @@
-__version__ = "0.35"
+__version__ = "0.36"
 
 __changelog__ = {
     "unreleased": """
+    """,
+    "0.36": """
+        - Restore last played date (thx to flabbamann)
+        - Fixed bad request error with new hashes and headers
+        - Added custom cefpython3 with chromium 108 (thx to llcc01/cefpython)
+        - Added user friendly auth process, does not need to get and insert npsso token manually
+        - Temporary removed macos support(sry i do not have mac, can't support it)
     """,
     "0.35": """
         - Fix pagination of fetched purchased games
