@@ -1,5 +1,6 @@
 import logging
 import sys
+import threading
 from typing import List, Any, AsyncGenerator
 
 from galaxy.api.consts import Platform, LicenseType
@@ -8,18 +9,43 @@ from galaxy.api.plugin import Plugin, create_and_run_plugin
 from galaxy.api.types import Authentication, Game, GameTime, NextStep, SubscriptionGame, Subscription, LicenseInfo
 
 from http_client import HttpClient
-from http_client import OAUTH_LOGIN_URL, OAUTH_LOGIN_REDIRECT_URL
+from http_client import OAUTH_LOGIN_URL, OAUTH_LOGIN_REDIRECT_URL, OAUTH_LOGIN_FINISH_URL, OAUTH_LOGIN_URL_FAKE
 from psn_client import PSNClient, parse_timestamp
+from cef_client import get_npsso_token
 
 from version import __version__
 
 AUTH_PARAMS = {
-    "window_title": "Login to My PlayStation\u2122",
+    "window_title": "Login to PlayStation Network",
     "window_width": 536,
     "window_height": 675,
     "start_uri": OAUTH_LOGIN_URL,
-    "end_uri_regex": "^" + OAUTH_LOGIN_REDIRECT_URL + ".*"
+    "end_uri_regex": "^" + OAUTH_LOGIN_REDIRECT_URL + ".*",
+    "end_uri": OAUTH_LOGIN_FINISH_URL
 }
+AUTH_PARAMS_FAKE = {
+    "window_title": "FINISH AUTH PROCESS AT ANOTHER WINDOW AND CLICK NEXT",
+    "window_width": 536,
+    "window_height": 200,
+    "start_uri": OAUTH_LOGIN_URL_FAKE,
+    "end_uri_regex": "^" + OAUTH_LOGIN_REDIRECT_URL + ".*",
+    "end_uri": OAUTH_LOGIN_REDIRECT_URL
+}
+
+JS = {r"^https://my\.account\.sony\.com/.*": [
+         r'''
+                 document.body.innerHTML = '';
+                 setTimeout(() => {
+                     document.write('<body bgcolor="FFFFFF" style="padding: 30px;">' +'
+                     '<center><form novalidate="" action="https://www.playstation.com/">' +
+                     '<span style="text-decoration: none; display: inline-block; font-size: 16px; font-weight: bold;' +
+                     'margin: 4px;">FINISH AUTH PROCESS AT ANOTHER WINDOW AND CLICK NEXT</span>' +
+                     '<button style="background-color: #008CBA; border: none; color: white; text-align: center; text-decoration: none;' +
+                     'display: inline-block; font-size: 16px; font-weight: bold; margin: 4px; cursor: pointer; padding: 14px 40px;">NEXT</button>' +
+                     '</form></center></body>');
+                 }, 1000);
+         '''
+     ]}
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +56,8 @@ class PSNPlugin(Plugin):
         super().__init__(Platform.Psn, __version__, reader, writer, token)
         self._http_client = HttpClient()
         self._psn_client = PSNClient(self._http_client)
+        self._npsso_token = ""
+        self._cef_thread = threading.Thread(target=get_npsso_token, args=(AUTH_PARAMS, self, ))
         logging.getLogger("urllib3").setLevel(logging.FATAL)
 
     async def _do_auth(self, cookies):
@@ -47,14 +75,17 @@ class PSNPlugin(Plugin):
     async def authenticate(self, stored_credentials=None):
         stored_cookies = stored_credentials.get("cookies") if stored_credentials else None
         if not stored_cookies:
-            #return NextStep("web_session", AUTH_PARAMS)
-            stored_cookies = {"npsso": "<64 character npsso code>"}
+            #need to use threading, asyncio.run() makes loop exception
+            self._cef_thread.start()
+            #need to use nextstep, because main thread will crash plugin if will not get answer in 20 seconds
+            return NextStep("web_session", AUTH_PARAMS_FAKE, cookies=[], js=JS)
 
         auth_info = await self._do_auth(stored_cookies)
         return auth_info
 
     async def pass_login_credentials(self, step, credentials, cookies):
-        cookies = {cookie["name"]: cookie["value"] for cookie in cookies}
+        #cookies = {cookie["name"]: cookie["value"] for cookie in cookies}
+        cookies = {"npsso": self._npsso_token}
         self._store_cookies(cookies)
         return await self._do_auth(cookies)
 

@@ -6,13 +6,17 @@ from galaxy.http import handle_exception, create_client_session
 
 OAUTH_LOGIN_REDIRECT_URL = "https://www.playstation.com/"
 
+OAUTH_LOGIN_FINISH_URL = "https://ca.account.sony.com/api/v1/ssocookie"
+
 OAUTH_LOGIN_URL = "https://web.np.playstation.com/api/session/v1/signin" \
                   "?redirect_uri=https://io.playstation.com/central/auth/login" \
                   "%3FpostSignInURL={redirect_url}" \
                   "%26cancelURL={redirect_url}" \
                   "&smcid=web:pdc"
 
-OAUTH_LOGIN_URL = OAUTH_LOGIN_URL.format(redirect_url=OAUTH_LOGIN_REDIRECT_URL)
+OAUTH_LOGIN_URL_FAKE = OAUTH_LOGIN_URL.format(redirect_url=OAUTH_LOGIN_REDIRECT_URL)
+
+OAUTH_LOGIN_URL = OAUTH_LOGIN_URL.format(redirect_url=OAUTH_LOGIN_FINISH_URL)
 
 REFRESH_COOKIES_URL = OAUTH_LOGIN_URL
 
