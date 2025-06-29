@@ -14,7 +14,7 @@
 [downloading]: img/downloading.png
 [downloadrelease1]: img/downloadrelease1.png
 [downloadrelease2]: img/downloadrelease2.png
-[unpackandcopyrelease]: img/unpackandcopyrelese.png
+[unpackandcopyrelease]: img/unpackandcopyrelease.png
 
 # GOG Galaxy PlayStation Network Connector Sign-in Workaround
 
