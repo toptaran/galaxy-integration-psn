@@ -1,6 +1,12 @@
 # PSN integration for Galaxy 2
 
-Supports game list & achievements. I don't think PS has play time tracking ATM.
+Supports game list & last played time. Other things under development.
+
+### Guides
+
+[How to Install](https://github.com/toptaran/galaxy-integration-psn/blob/master/howto/INSTALL.md)
+
+[Installation from sources](https://github.com/toptaran/galaxy-integration-psn/blob/master/howto/INSTALL_FROM_SOURCES.md)
 
 ## Credits
 

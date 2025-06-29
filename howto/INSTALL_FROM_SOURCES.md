@@ -126,14 +126,25 @@ At this point, you should now have a clean version of the PSN plugin installed a
    
    ![plugins3]
 
-4. Download latest repo version from github [GitHub](https://github.com/toptaran/galaxy-integration-psn).
+4. Download latest repo version from [GitHub](https://github.com/toptaran/galaxy-integration-psn)
 
-Click `Code` -> `Download ZIP`.
+   Click `Code` -> `Download ZIP`
    
    ![download]
 
-5. Unpack it at any folder. Follow inside unpacked folders `src` folder. `Select` all content (CTRL + A) and `Copy`.
+5. Unpack it at any folder. Follow inside unpacked folders `src` folder. `Select` all content (CTRL + A) and `Copy`
 
    ![unpackandcopy]
 
-6. Return back to plugin folder in step 3 and `Paste` here with `Replace`.
+6. Return back to plugin folder at step 3 and `Paste` here with `Replace`
+
+7. Return to unpacked repo folder and navigate to `libs` folder.
+
+   `Copy` here `cefpython3.7z` and `Paste` to plugin fodler from step 3.
+
+   `Unpack` it here. You can delete `cefpython3.7z` after unpack.
+
+   `cefpython3.7z` is custom compiled cefpython3 module with chromium version 108.
+
+8. Open GOG and connect your psn profile.
+
