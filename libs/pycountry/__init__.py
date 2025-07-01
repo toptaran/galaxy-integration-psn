@@ -2,7 +2,7 @@
 
 import os.path
 import unicodedata
-from importlib import metadata as _importlib_metadata
+import importlib_metadata as _importlib_metadata
 from typing import Dict, List, Optional, Type
 
 import pycountry.db

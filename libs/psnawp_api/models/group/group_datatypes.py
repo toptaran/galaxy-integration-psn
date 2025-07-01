@@ -1,6 +1,6 @@
 """Contains datatypes for group messaging endpoint."""
 
-from typing import TypedDict
+from typing_extensions import TypedDict
 
 
 class MessageResponse(TypedDict):

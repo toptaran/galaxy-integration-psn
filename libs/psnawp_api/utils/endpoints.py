@@ -1,10 +1,11 @@
 """Path Endpoints and domains for the PlayStation API."""
 
-from typing import Final
+from typing import Dict
+from typing_extensions import Final
 
 #: BASE_PATH contains common base URIs for PlayStation API endpoints.
 #: It centralizes frequently used URL paths, making the code cleaner and easier to maintain.
-BASE_PATH: Final[dict[str, str]] = {
+BASE_PATH: Final[Dict[str, str]] = {
     "base_uri": "https://ca.account.sony.com/api",
     "profile_uri": "https://m.np.playstation.com/api/userProfile/v1/internal/users",
     "profile_uri_v2": "https://m.np.playstation.com/api/userProfile/v2/internal/users",
@@ -27,7 +28,7 @@ BASE_PATH: Final[dict[str, str]] = {
 #: API_PATH contains the relative paths for various PlayStation API endpoints, organized by categories
 #: such as authentication, client/user operations, groups, games, and trophies. These paths are used
 #: to construct full URLs for API requests.
-API_PATH: Final[dict[str, str]] = {
+API_PATH: Final[Dict[str, str]] = {
     # Auth Endpoints
     "oauth_code": "/authz/v3/oauth/authorize",
     "access_token": "/authz/v3/oauth/token",

@@ -5,7 +5,8 @@ from __future__ import annotations
 import time
 import uuid
 from functools import wraps
-from typing import TYPE_CHECKING, ClassVar, TypedDict, TypeVar, cast
+from typing import TYPE_CHECKING, ClassVar, TypeVar, cast
+from typing_extensions import TypedDict
 from urllib.parse import parse_qs, urlparse
 
 from typing_extensions import NotRequired, ParamSpec, Unpack
@@ -180,10 +181,11 @@ class Authenticator:
         if self.access_token_expiration_time > time.time():
             return
 
-        header = type(self).AUTH_HEADER | {
+        header = type(self).AUTH_HEADER.copy()
+        header.update({
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "com.sony.snei.np.android.sso.share.oauth.versa.USER_AGENT",
-        }
+        })
         data = {
             "refresh_token": self.token_response["refresh_token"],
             "grant_type": "refresh_token",
@@ -205,11 +207,12 @@ class Authenticator:
         :param authorization_code: Code obtained using npsso code.
 
         """
-        header = type(self).AUTH_HEADER | {
+        header = type(self).AUTH_HEADER.copy()
+        header.update({
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "com.sony.snei.np.android.sso.share.oauth.versa.USER_AGENT",
             "X-Psn-Correlation-Id": self.cid,
-        }
+        })
         data = {
             "cid": self.cid,
             "code": authorization_code,

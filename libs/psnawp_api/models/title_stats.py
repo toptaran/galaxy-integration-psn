@@ -6,7 +6,8 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Final, Literal
+from typing import TYPE_CHECKING, Any
+from typing_extensions import Literal, Final
 
 from typing_extensions import Self, override
 

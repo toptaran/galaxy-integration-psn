@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+from typing_extensions import Literal, TypedDict
 
 
 class UserRootResponse(TypedDict):

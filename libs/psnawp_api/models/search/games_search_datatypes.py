@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import Literal, TypedDict
+from typing_extensions import Literal, TypedDict
 
 
 class SearchDomain(IntEnum):

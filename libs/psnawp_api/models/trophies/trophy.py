@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any
+from typing_extensions import TypedDict
 
 from typing_extensions import Self, override
 
@@ -200,7 +201,8 @@ class TrophyIterator(PaginationIterator[Trophy]):
         service_name = self.platform.get_trophy_service_name()
         params = {
             "npServiceName": service_name,
-        } | self._pagination_args.get_params_dict()
+        }
+        params.update(self._pagination_args.get_params_dict())
         response = self.authenticator.get(url=self._url, params=params).json()
         self._total_item_count = response.get("totalItemCount", 0)
 
@@ -295,7 +297,8 @@ class TrophyWithProgressIterator(PaginationIterator[TrophyWithProgress]):
         service_name = self.platform.get_trophy_service_name()
         params = {
             "npServiceName": service_name,
-        } | self._pagination_args.get_params_dict()
+        }
+        params.update(self._pagination_args.get_params_dict())
 
         response = self.authenticator.get(url=self._url, params=params).json()
         self._total_item_count = response.get("totalItemCount", 0)
@@ -308,7 +311,7 @@ class TrophyWithProgressIterator(PaginationIterator[TrophyWithProgress]):
         self.rarest_trophies = response_progress.get("rarestTrophies")
         trophies_progress: list[dict[str, Any]] = response_progress.get("trophies")
 
-        for trophy, progress in zip(trophies, trophies_progress, strict=False):
+        for trophy, progress in zip(trophies, trophies_progress):
             trophy_instance = TrophyWithProgress.from_trophy_dict(
                 {
                     **trophy,

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from random import choice
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, overload
+from typing_extensions import Literal
 
 from pyrate_limiter import Duration, Rate
 

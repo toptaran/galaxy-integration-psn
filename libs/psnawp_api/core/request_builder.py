@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, TypeAlias, TypedDict, cast
+from typing import TYPE_CHECKING, Any, cast, Dict
+from typing_extensions import TypedDict, TypeAlias
 
 from pyrate_limiter import Duration, Limiter, LimiterDelayException
 from pyrate_limiter.buckets.sqlite_bucket import SQLiteBucket
@@ -86,7 +87,7 @@ RequestBuilderHeaders = TypedDict(
     },
 )
 
-_TextMapping: TypeAlias = dict[str, str]
+_TextMapping: TypeAlias = Dict[str, str]
 
 
 class RequestOptions(TypedDict):

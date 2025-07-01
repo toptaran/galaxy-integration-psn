@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from functools import cached_property
-from typing import TYPE_CHECKING, Any, Literal, overload
+import functools
+from typing_extensions import Literal
+from typing import TYPE_CHECKING, Any, overload
 
 from psnawp_api.models.game_entitlements import GameEntitlementsIterator
 from psnawp_api.models.group.group import Group
@@ -53,7 +54,8 @@ class Client:
         """
         self.authenticator = authenticator
 
-    @cached_property
+    @property
+    @functools.lru_cache()
     def online_id(self) -> str:
         """Gets the online ID of the client logged in the api.
 
@@ -71,7 +73,8 @@ class Client:
         online_id: str = response["onlineId"]
         return online_id
 
-    @cached_property
+    @property
+    @functools.lru_cache()
     def account_id(self) -> str:
         """Gets the account ID of the client logged in the api.
 

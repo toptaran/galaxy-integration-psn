@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
+from typing_extensions import TypedDict
 
 from typing_extensions import NotRequired, Self
 
@@ -125,7 +126,8 @@ class GameEntitlementsIterator(PaginationIterator[GameEntitlement]):
             "fields": "titleMeta,gameMeta,conceptMeta,rewardMeta,rewardMeta.retentionPolicy,rewardMeta.rewardMembershipType",
             "gameMetaPackageType": "PSGD,PS4GD",
             "titleId": self.title_ids,
-        } | self._pagination_args.get_params_dict()
+        }
+        params.update(self._pagination_args.get_params_dict())
 
         response = self.authenticator.get(
             url=self._url,
