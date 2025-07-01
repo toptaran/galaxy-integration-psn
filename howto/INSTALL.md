@@ -12,8 +12,9 @@
 [offline]: img/offline.png
 [disconnected]: img/disconnected.png
 [downloading]: img/downloading.png
-[download]: img/download.png
-[unpackandcopy]: img/unpackandcopy.png
+[downloadrelease1]: img/downloadrelease1.png
+[downloadrelease2]: img/downloadrelease2.png
+[unpackandcopyrelease]: img/unpackandcopyrelease.png
 
 # GOG Galaxy PlayStation Network Connector Sign-in Workaround
 
@@ -126,14 +127,21 @@ At this point, you should now have a clean version of the PSN plugin installed a
    
    ![plugins3]
 
-4. Download latest repo version from github [GitHub](https://github.com/toptaran/galaxy-integration-psn).
+4. Download latest release from [GitHub](https://github.com/toptaran/galaxy-integration-psn)
 
-Click `Code` -> `Download ZIP`.
+   Click at `Latest release` at right side block
    
-   ![download]
+   ![downloadrelease1]
 
-5. Unpack it at any folder. Follow inside unpacked folders `src` folder. `Select` all content (CTRL + A) and `Copy`.
+   Click on `windows.zip` to download.
 
-   ![unpackandcopy]
+   ![downloadrelease2]
 
-6. Return back to plugin folder in step 3 and `Paste` here with `Replace`.
+5. Unpack it at any folder. Follow in `windows` folder. `Select` all content (CTRL + A) and `Copy`
+
+   ![unpackandcopyrelease]
+
+6. Return back to plugin folder at step 3 and `Paste` here with `Replace`
+
+7. Open GOG and connect your psn profile.
+
