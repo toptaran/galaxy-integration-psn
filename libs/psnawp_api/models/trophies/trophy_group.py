@@ -344,8 +344,15 @@ class TrophyGroupsSummaryBuilder:
 
         merged_data: dict[str, Any] = trophy_groups_metadata.copy()
         merged_data.update(trophy_groups_user_data)
-        merged_trophy_groups: list[dict[str, Any]] = trophy_groups_metadata.get("trophyGroups").copy()
-        merged_trophy_groups[0].update(trophy_groups_user_data.get("trophyGroups")[0])
+
+        merged_trophy_groups: list[dict[str, Any]] = []
+        for meta, user_data in zip(
+            trophy_groups_metadata.get("trophyGroups"),
+            trophy_groups_user_data.get("trophyGroups")
+        ):
+            meta.update(user_data)
+            merged_trophy_groups.append(meta)
+
         merged_data["trophyGroups"] = merged_trophy_groups
 
         trophy_groups = [TrophyGroupSummaryWithProgress.from_dict(trophy_group) for trophy_group in merged_data.get("trophyGroups", [])]
