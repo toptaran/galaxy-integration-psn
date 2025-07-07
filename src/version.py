@@ -1,7 +1,14 @@
-__version__ = "0.36"
+__version__ = "0.37"
 
 __changelog__ = {
     "unreleased": """
+    """,
+    "0.37": """
+        - Switched PSN data process to psnawp project
+        - Added support for play time and played date
+        - Added support for achievements
+        - Added support to show played games even if not owned now
+        - Added original psnawp module and it's requirenments
     """,
     "0.36": """
         - Restore last played date (thx to flabbamann)

@@ -1,17 +1,17 @@
 import logging
 import sys
 import threading
-from typing import List, Any, AsyncGenerator
+from typing import List, Any, Dict
 
-from galaxy.api.consts import Platform, LicenseType
+from galaxy.api.consts import Platform
 from galaxy.api.errors import InvalidCredentials
 from galaxy.api.plugin import Plugin, create_and_run_plugin
-from galaxy.api.types import Authentication, Game, GameTime, NextStep, SubscriptionGame, Subscription, LicenseInfo
+from galaxy.api.types import Authentication, GameTime, NextStep, Achievement
 
 from http_client import HttpClient
 from http_client import OAUTH_LOGIN_URL, OAUTH_LOGIN_REDIRECT_URL, OAUTH_LOGIN_FINISH_URL, OAUTH_LOGIN_URL_FAKE
-from psn_client import PSNClient, parse_timestamp
 from cef_client import get_npsso_token
+from psnawp_client import PSNAWPClient, PsnGame
 
 from version import __version__
 
@@ -55,21 +55,23 @@ class PSNPlugin(Plugin):
     def __init__(self, reader, writer, token):
         super().__init__(Platform.Psn, __version__, reader, writer, token)
         self._http_client = HttpClient()
-        self._psn_client = PSNClient(self._http_client)
         self._npsso_token = ""
+        self._psnawp_client = PSNAWPClient(self._npsso_token)
         self._cef_thread = threading.Thread(target=get_npsso_token, args=(AUTH_PARAMS, self, ))
         logging.getLogger("urllib3").setLevel(logging.FATAL)
+        logging.getLogger("psnawp_client").setLevel(logging.DEBUG)
 
     async def _do_auth(self, cookies):
         if not cookies:
             raise InvalidCredentials()
 
-        self._http_client.set_cookies_updated_callback(self._update_stored_cookies)
-        self._http_client.update_cookies(cookies)
-        await self._http_client.refresh_cookies()
-        user_id, user_name = await self._psn_client.async_get_own_user_info()
+        self._npsso_token = cookies.get("npsso")
+        self._psnawp_client.set_new_npsso_token(self._npsso_token)
+        user_id, user_name = await self._psnawp_client.get_own_user_info()
         if user_id == "":
             raise InvalidCredentials()
+
+        self._psnawp_client.start_init(self)
         return Authentication(user_id=user_id, user_name=user_name)
 
     async def authenticate(self, stored_credentials=None):
@@ -101,41 +103,36 @@ class PSNPlugin(Plugin):
             cookies[morsel.key] = morsel.value
         self._store_cookies(cookies)
 
+    '''
+    #comment it for now, maybe implement later if someone need it
     async def get_subscriptions(self) -> List[Subscription]:
         is_plus_active = await self._psn_client.get_psplus_status()
         return [Subscription(subscription_name="PlayStation PLUS", end_time=None, owned=is_plus_active)]
 
     async def get_subscription_games(self, subscription_name: str, context: Any) -> AsyncGenerator[List[SubscriptionGame], None]:
         yield await self._psn_client.get_subscription_games()
-
-    async def prepare_game_times_context(self, game_ids: List[str]) -> Any:
-        return {game['titleId']: game for game in await self._psn_client.async_get_played_games()}
-
-    async def get_game_time(self, game_id: str, context: Any) -> GameTime:
-        time_played, last_played_game = None, None
-        try:
-            game = context[game_id]
-            last_played_game = parse_timestamp(game['lastPlayedDateTime'])
-        except KeyError as e:
-            logger.debug(f'KeyError: {e}')
-        return GameTime(game_id, time_played, last_played_game)
+    '''
 
     async def get_owned_games(self):
-        def game_parser(title):
-            return Game(
-                game_id=title["titleId"],
-                game_title=title["name"],
-                dlcs=[],
-                license_info=LicenseInfo(LicenseType.SinglePurchase, None)
-            )
+        #psnawp need much of time to init, so will do at another thread
+        return []
 
-        def parse_played_games(titles):
-            return [{"titleId": title["titleId"], "name": title["name"]} for title in titles]
+    async def get_unlocked_achievements(self, game_id: str, context: Any) -> List[Achievement]:
+        persistent_cache: Dict[str, Any] = self.persistent_cache
+        if game_id in persistent_cache:
+            psn_game: PsnGame = persistent_cache[game_id]
+            return psn_game.get_gog_achievements()
+        return []
 
-        purchased_games = await self._psn_client.async_get_purchased_games()
-        played_games = parse_played_games(await self._psn_client.async_get_played_games())
-        unique_all_games = {game['titleId']: game for game in played_games + purchased_games}.values()
-        return [game_parser(game) for game in unique_all_games]
+    async def get_game_time(self, game_id: str, context: Any) -> GameTime:
+        persistent_cache: Dict[str, Any] = self.persistent_cache
+        if game_id in persistent_cache:
+            psn_game: PsnGame = persistent_cache[game_id]
+            return psn_game.get_gog_game_time()
+        return GameTime(game_id, 0, 0)
+
+    def tick(self) -> None:
+        self._psnawp_client.tick(self)
 
     async def shutdown(self):
         await self._http_client.close()
