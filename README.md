@@ -1,6 +1,6 @@
 # PSN integration for Galaxy 2
 
-Supports game list & last played time. Other things under development.
+Supports game list, last played time, time played, achievements. Other things under development.
 
 ### Guides
 
