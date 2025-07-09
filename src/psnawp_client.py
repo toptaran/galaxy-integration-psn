@@ -125,7 +125,7 @@ class PSNAWPClient:
         return PlatformType.UNKNOWN
 
     @staticmethod
-    def get_platform_from_category(ptype: str) -> PlatformType:
+    def get_platform_from_category(ptype: PlatformCategory) -> PlatformType:
         if ptype == PlatformCategory.PS4:
             return PlatformType.PS4
         if ptype == PlatformCategory.PS5:
@@ -170,7 +170,6 @@ class PSNAWPClient:
             psntrophytitlelist: Dict[str, str] = {}
             have_changes = False
             psn_game: PsnGame = None
-            games_to_add_or_update: List[str] = []
 
             # getting data of games owned by user from offset, do not need to read all list every time, it's quite long
             # 3 seconds for every 20 games
@@ -182,14 +181,16 @@ class PSNAWPClient:
                 if gameEntitlement["titleMeta"]["titleId"] not in persistent_cache:
                     psn_game = PsnGame(gameEntitlement["titleMeta"]["titleId"], gameEntitlement["titleMeta"]["name"], self.get_platform_from_game_meta_type(gameEntitlement["gameMeta"]["type"]))
                     persistent_cache[psn_game.title_id] = psn_game
-                    games_to_add_or_update.append(psn_game.title_id)
                     # better to add/update games in batch with delay
                     #psnplugin.add_game(persistent_cache[gameEntitlement["titleMeta"]["titleId"]].get_gog_game())
                 else:
                     psn_game = persistent_cache[persistent_cache[gameEntitlement["titleMeta"]["titleId"]]]
                     if len(psn_game.np_communication_id) > 0:
                         psntrophytitlelist[psn_game.np_communication_id] = psn_game.title_id
-                    games_to_add_or_update.append(psn_game.title_id)
+
+                # propagate data as it received with delay, to make it easier for gog and user see smth doing
+                psnplugin.add_game(psn_game.get_gog_game())
+                time.sleep(0.2)
 
             # getting data of played games limited by last timestamp, do not need to read all list every time, it can be long
             # 3 seconds for every 200 played games
@@ -211,7 +212,6 @@ class PSNAWPClient:
 
                 if title_stat.title_id not in persistent_cache:
                     persistent_cache[title_stat.title_id] = PsnGame(title_stat.title_id, title_stat.name, self.get_platform_from_category(title_stat.category))
-                    games_to_add_or_update.append(title_stat.title_id)
                     # better to add/update games in batch with delay
                     #psnplugin.add_game(persistent_cache[title_stat.title_id])
 
@@ -219,12 +219,14 @@ class PSNAWPClient:
                 psn_game.last_played_timestamp = last_played_timestamp
                 psn_game.play_duration = int(title_stat.play_duration.total_seconds() / 60)
 
-                if psn_game.title_id not in games_to_add_or_update:
-                    games_to_add_or_update.append(psn_game.title_id)
                 # gog client will auto request this data on game add, id do your self can get request processing error because of limits
                 #psnplugin.update_game_time(psn_game.get_gog_game_time())
                 if len(psn_game.np_communication_id) == 0:
                     titleids.append(title_stat.title_id)
+
+                # propagate data as it received with delay, to make it easier for gog and user see smth doing
+                psnplugin.add_game(psn_game.get_gog_game())
+                time.sleep(0.2)
             title_stats_last_updated = new_title_stats_last_updated
 
             # getting np_communication_id of played games if not have it, it can be quite long
@@ -256,23 +258,19 @@ class PSNAWPClient:
 
                     psn_game = persistent_cache[psntrophytitlelist[trophy_title.np_communication_id]]
 
-                    if psn_game.title_id not in games_to_add_or_update:
-                        games_to_add_or_update.append(psn_game.title_id)
-
                     trophies = client.trophies(psn_game.np_communication_id, psn_game.platform, True, "all")
                     for trophy in trophies:
                         if trophy.earned and trophy.trophy_id not in psn_game.trophies:
                             psn_game.trophies[trophy.trophy_id] = PsnTrophy(trophy.trophy_id, trophy.trophy_name, int(trophy.earned_date_time.timestamp()))
                             # gog client will auto request this data on game add, id do your self can get request processing error because of limits
                             #psnplugin.unlock_achievement(psn_game.title_id, psn_game.get_gog_achievement(trophy.trophy_id))
+
+                    #update only if there are any trophies
+                    if len(psn_game.trophies) > 0:
+                        # propagate data as it received with delay, to make it easier for gog and user see smth doing
+                        psnplugin.add_game(psn_game.get_gog_game())
+                        time.sleep(0.2)
             trophy_titles_last_updated = new_trophy_titles_last_updated
-
-            logging.debug(f"games_to_add_or_update({games_to_add_or_update}))")
-
-            # process game with delay, to not receive request processing error because of limits
-            for title_id in games_to_add_or_update:
-                psnplugin.add_game(persistent_cache[title_id].get_gog_game())
-                time.sleep(0.2)
 
             persistent_cache["game_entitlement_count"] = game_entitlement_count
             persistent_cache["title_stats_last_updated"] = title_stats_last_updated
