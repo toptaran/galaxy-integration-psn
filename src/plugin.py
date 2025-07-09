@@ -77,6 +77,9 @@ class PSNPlugin(Plugin):
     async def authenticate(self, stored_credentials=None):
         stored_cookies = stored_credentials.get("cookies") if stored_credentials else None
         if not stored_cookies:
+            # clear and push cache, client do not autoremove it
+            self.persistent_cache.clear()
+            self.push_cache()
             # need to use threading, asyncio.run() makes loop exception
             self._cef_thread.start()
             # need to use nextstep, because main thread will crash plugin if will not get answer in 20 seconds
