@@ -148,5 +148,5 @@ At this point, you should now have a clean version of the PSN plugin installed a
 
    `cefpython3_win7.7z` is custom compiled cefpython3 module with chromium version 108.
 
-9. Open GOG and connect your psn profile.
+8. Open GOG and connect your psn profile.
 

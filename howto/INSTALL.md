@@ -133,7 +133,9 @@ At this point, you should now have a clean version of the PSN plugin installed a
    
    ![downloadrelease1]
 
-   Click on `windows.zip` to download.
+   Click on `windows.zip` if you have Windows 10 or Windows 11 to download.
+   
+   Click on `windows_win7.zip` if you have Windows 7 to download.
 
    ![downloadrelease2]
 
