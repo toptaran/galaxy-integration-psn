@@ -8,6 +8,8 @@ Supports game list, last played time, time played, achievements. Other things un
 
 [Installation from sources](https://github.com/toptaran/galaxy-integration-psn/blob/master/howto/INSTALL_FROM_SOURCES.md)
 
+[FAQ](https://github.com/toptaran/galaxy-integration-psn/blob/master/howto/FAQ.md)
+
 ## Credits
 
 I've based this partially on work done by others:
