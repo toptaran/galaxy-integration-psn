@@ -82,6 +82,40 @@ class PSNAWPClient:
             user_name = ""
         return user_id, user_name
 
+    def init_cache(self, psnplugin):
+        # serialize PsnGame objects from cache on init
+        persistent_cache: Dict[str, Any] = psnplugin.persistent_cache
+        if not self.is_inited:
+            for title_id, value in persistent_cache.items():
+                # Key must start from CUSA(PS4) or PPSA(PS5), exmaple: CUSA34390_00, PPSA08332_00
+                # Value start { - it's Dict
+                if (title_id.startswith("CUSA") or title_id.startswith("PPSA")) and value.startswith("{"):
+                    persistent_cache[title_id] = self.load_psn_game_from_json(value)
+
+    def get_owned_games(self, psnplugin) -> List[Game]:
+        persistent_cache: Dict[str, Any] = psnplugin.persistent_cache
+        games: List[Game] = []
+        for title_id, value in persistent_cache.items():
+            # Key must start from CUSA(PS4) or PPSA(PS5), exmaple: CUSA34390_00, PPSA08332_00
+            if title_id.startswith("CUSA") or title_id.startswith("PPSA"):
+                psn_game: PsnGame = value
+                games.append(psn_game.get_gog_game())
+        return games
+
+    def get_unlocked_achievements(self, psnplugin, game_id: str) -> List[Achievement]:
+        persistent_cache: Dict[str, Any] = psnplugin.persistent_cache
+        if game_id in persistent_cache:
+            psn_game: PsnGame = persistent_cache[game_id]
+            return psn_game.get_gog_achievements()
+        return []
+
+    def get_game_time(self, psnplugin, game_id: str) -> GameTime:
+        persistent_cache: Dict[str, Any] = psnplugin.persistent_cache
+        if game_id in persistent_cache:
+            psn_game: PsnGame = persistent_cache[game_id]
+            return psn_game.get_gog_game_time()
+        return GameTime(game_id, 0, 0)
+
     @staticmethod
     def get_platform_from_game_meta_type(ptype: str) -> PlatformType:
         if ptype == 'PS4GD':
@@ -117,14 +151,6 @@ class PSNAWPClient:
                 time.sleep(10)
 
             persistent_cache: Dict[str, Any] = psnplugin.persistent_cache
-
-            # serialize PsnGame objects from cache on init
-            if not self.is_inited:
-                for title_id, value in persistent_cache.items():
-                    # Key must start from CUSA(PS4) or PPSA(PS5), exmaple: CUSA34390_00, PPSA08332_00
-                    # Value start { - it's Dict
-                    if (title_id.startswith("CUSA") or title_id.startswith("PPSA")) and value.startswith("{"):
-                        persistent_cache[title_id] = self.load_psn_game_from_json(value)
 
             game_entitlement_count: int = 0
             title_stats_last_updated: int = 0
@@ -246,7 +272,7 @@ class PSNAWPClient:
             # process game with delay, to not receive request processing error because of limits
             for title_id in games_to_add_or_update:
                 psnplugin.add_game(persistent_cache[title_id].get_gog_game())
-                time.sleep(0.1)
+                time.sleep(0.2)
 
             persistent_cache["game_entitlement_count"] = game_entitlement_count
             persistent_cache["title_stats_last_updated"] = title_stats_last_updated
@@ -266,6 +292,7 @@ class PSNAWPClient:
         self.is_updating = False
 
     def start_init(self, psnplugin):
+        self.init_cache(psnplugin)
         self.work_thread = threading.Thread(target=self.update_task, args=(psnplugin,))
         self.work_thread.start()
 

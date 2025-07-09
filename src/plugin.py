@@ -6,7 +6,7 @@ from typing import List, Any, Dict
 from galaxy.api.consts import Platform
 from galaxy.api.errors import InvalidCredentials
 from galaxy.api.plugin import Plugin, create_and_run_plugin
-from galaxy.api.types import Authentication, GameTime, NextStep, Achievement
+from galaxy.api.types import Authentication, Achievement, Game, GameTime, NextStep
 
 from http_client import HttpClient
 from http_client import OAUTH_LOGIN_URL, OAUTH_LOGIN_REDIRECT_URL, OAUTH_LOGIN_FINISH_URL, OAUTH_LOGIN_URL_FAKE
@@ -77,9 +77,9 @@ class PSNPlugin(Plugin):
     async def authenticate(self, stored_credentials=None):
         stored_cookies = stored_credentials.get("cookies") if stored_credentials else None
         if not stored_cookies:
-            #need to use threading, asyncio.run() makes loop exception
+            # need to use threading, asyncio.run() makes loop exception
             self._cef_thread.start()
-            #need to use nextstep, because main thread will crash plugin if will not get answer in 20 seconds
+            # need to use nextstep, because main thread will crash plugin if will not get answer in 20 seconds
             return NextStep("web_session", AUTH_PARAMS_FAKE, cookies=[], js=JS)
 
         auth_info = await self._do_auth(stored_cookies)
@@ -113,23 +113,14 @@ class PSNPlugin(Plugin):
         yield await self._psn_client.get_subscription_games()
     '''
 
-    async def get_owned_games(self):
-        #psnawp need much of time to init, so will do at another thread
-        return []
+    async def get_owned_games(self) -> List[Game]:
+        return self._psnawp_client.get_owned_games(self)
 
     async def get_unlocked_achievements(self, game_id: str, context: Any) -> List[Achievement]:
-        persistent_cache: Dict[str, Any] = self.persistent_cache
-        if game_id in persistent_cache:
-            psn_game: PsnGame = persistent_cache[game_id]
-            return psn_game.get_gog_achievements()
-        return []
+        return self._psnawp_client.get_unlocked_achievements(self, game_id)
 
     async def get_game_time(self, game_id: str, context: Any) -> GameTime:
-        persistent_cache: Dict[str, Any] = self.persistent_cache
-        if game_id in persistent_cache:
-            psn_game: PsnGame = persistent_cache[game_id]
-            return psn_game.get_gog_game_time()
-        return GameTime(game_id, 0, 0)
+        return self._psnawp_client.get_game_time(self, game_id)
 
     def tick(self) -> None:
         self._psnawp_client.tick(self)
