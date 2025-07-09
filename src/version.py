@@ -1,7 +1,14 @@
-__version__ = "0.37"
+__version__ = "0.38"
 
 __changelog__ = {
     "unreleased": """
+    """,
+    "0.38": """
+        - Added return cached games and stats on init
+        - Added custom compiled cefpython3 with cef 123
+        - Added support for Win11
+        - Changed logic of adding games to library
+        - Adding clear cache on new login
     """,
     "0.37": """
         - Switched PSN data process to psnawp project
