@@ -184,7 +184,7 @@ class PSNAWPClient:
                     # better to add/update games in batch with delay
                     #psnplugin.add_game(persistent_cache[gameEntitlement["titleMeta"]["titleId"]].get_gog_game())
                 else:
-                    psn_game = persistent_cache[persistent_cache[gameEntitlement["titleMeta"]["titleId"]]]
+                    psn_game = persistent_cache[gameEntitlement["titleMeta"]["titleId"]]
                     if len(psn_game.np_communication_id) > 0:
                         psntrophytitlelist[psn_game.np_communication_id] = psn_game.title_id
 
