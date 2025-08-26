@@ -1,8 +1,8 @@
 {
-    "tag_name": "v0.38",
+    "tag_name": "v0.39",
     "assets": [
         {
-            "browser_download_url": "https://github.com/toptaran/galaxy-integration-psn/releases/download/v0.38/windows.zip",
+            "browser_download_url": "https://github.com/toptaran/galaxy-integration-psn/releases/download/v0.39/windows.zip",
             "name": "windows.zip"
         }
     ]

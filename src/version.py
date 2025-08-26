@@ -1,7 +1,13 @@
-__version__ = "0.38"
+__version__ = "0.39"
 
 __changelog__ = {
     "unreleased": """
+    """,
+    "0.39": """
+        - Removed cefpython3_win7 as it not work at all at win7
+        - Added ability to work w/o new cefpython3 plugin if some one do not want to add it
+        - Added ability for manually set NPSSO token
+        - cefpython3 plugin require minimum windows 10 to work, older can set NPSSO token manually
     """,
     "0.38": """
         - Added return cached games and stats on init
