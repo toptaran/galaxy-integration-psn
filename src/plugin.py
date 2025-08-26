@@ -1,7 +1,7 @@
 import logging
 import sys
 import threading
-from typing import List, Any, Dict
+from typing import List, Any
 
 from galaxy.api.consts import Platform
 from galaxy.api.errors import InvalidCredentials
@@ -9,44 +9,11 @@ from galaxy.api.plugin import Plugin, create_and_run_plugin
 from galaxy.api.types import Authentication, Achievement, Game, GameTime, NextStep
 
 from http_client import HttpClient
-from http_client import OAUTH_LOGIN_URL, OAUTH_LOGIN_REDIRECT_URL, OAUTH_LOGIN_FINISH_URL, OAUTH_LOGIN_URL_FAKE
+from http_client import AUTH_PARAMS, AUTH_PARAMS_MAIN, AUTH_PARAMS_MAIN_JS
 from cef_client import get_npsso_token
-from psnawp_client import PSNAWPClient, PsnGame
+from psnawp_client import PSNAWPClient
 
 from version import __version__
-
-AUTH_PARAMS = {
-    "window_title": "Login to PlayStation Network",
-    "window_width": 536,
-    "window_height": 675,
-    "start_uri": OAUTH_LOGIN_URL,
-    "end_uri_regex": "^" + OAUTH_LOGIN_REDIRECT_URL + ".*",
-    "end_uri": OAUTH_LOGIN_FINISH_URL
-}
-AUTH_PARAMS_FAKE = {
-    "window_title": "FINISH AUTH PROCESS AT ANOTHER WINDOW AND CLICK NEXT",
-    "window_width": 536,
-    "window_height": 200,
-    "start_uri": OAUTH_LOGIN_URL_FAKE,
-    "end_uri_regex": "^" + OAUTH_LOGIN_REDIRECT_URL + ".*",
-    "end_uri": OAUTH_LOGIN_REDIRECT_URL
-}
-
-JS = {r"^https://my\.account\.sony\.com/.*": [
-         r'''
-                 document.body.innerHTML = '';
-                 setTimeout(() => {
-                     document.write('<body bgcolor="FFFFFF" style="padding: 30px;">' +
-                     '<center><form novalidate="" action="https://www.playstation.com/">' +
-                     '<span style="text-decoration: none; display: inline-block; font-size: 16px; font-weight: bold;' +
-                     'margin: 4px;">FINISH AUTH PROCESS AT ANOTHER WINDOW AND CLICK NEXT</span>' +
-                     '<button style="background-color: #008CBA; border: none; color: white; text-align: center; text-decoration: none;' +
-                     'display: inline-block; font-size: 16px; font-weight: bold; margin: 4px; cursor: pointer; padding: 14px 40px;">NEXT</button>' +
-                     '</form></center></body>');
-                 }, 1000);
-         '''
-     ]}
-
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +24,23 @@ class PSNPlugin(Plugin):
         self._http_client = HttpClient()
         self._npsso_token = ""
         self._psnawp_client = PSNAWPClient(self._npsso_token)
-        self._cef_thread = threading.Thread(target=get_npsso_token, args=(AUTH_PARAMS, self, ))
+        self._cef_browser = None
+        self._cef_supported = True
+
+        try:
+            from cefpython3 import cefpython
+        except:
+            self._cef_supported = False
+            pass
+
+        win_ver = sys.getwindowsversion()
+        major, minor, build = win_ver.platform_version
+        if major < 10:
+            self._cef_supported = False
+
+        if self._cef_supported:
+            self._cef_thread = threading.Thread(target=get_npsso_token, args=(AUTH_PARAMS, self, ))
+
         logging.getLogger("urllib3").setLevel(logging.FATAL)
         logging.getLogger("psnawp_client").setLevel(logging.DEBUG)
 
@@ -81,15 +64,24 @@ class PSNPlugin(Plugin):
             self.persistent_cache.clear()
             self.push_cache()
             # need to use threading, asyncio.run() makes loop exception
-            self._cef_thread.start()
+            if self._cef_supported:
+                self._cef_thread.start()
             # need to use nextstep, because main thread will crash plugin if will not get answer in 20 seconds
-            return NextStep("web_session", AUTH_PARAMS_FAKE, cookies=[], js=JS)
+            return NextStep("web_session", AUTH_PARAMS_MAIN, cookies=[], js=AUTH_PARAMS_MAIN_JS)
 
         auth_info = await self._do_auth(stored_cookies)
         return auth_info
 
     async def pass_login_credentials(self, step, credentials, cookies):
-        #cookies = {cookie["name"]: cookie["value"] for cookie in cookies}
+        # close second window if exist
+        if self._cef_supported and self._cef_browser is not None:
+            self._cef_browser.CloseBrowser(True)
+
+        # set npsso if typed manually
+        tcookies = {cookie["name"]: cookie["value"] for cookie in cookies}
+        if "npsso" in tcookies:
+            self._npsso_token = tcookies.get("npsso")
+
         cookies = {"npsso": self._npsso_token}
         self._store_cookies(cookies)
         return await self._do_auth(cookies)

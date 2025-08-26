@@ -1,5 +1,4 @@
 import logging
-from cefpython3 import cefpython as cef
 import platform
 import sys
 import ctypes
@@ -11,8 +10,9 @@ logger = logging.getLogger(__name__)
 def get_npsso_token(auth_params, psnplugin):
     time.sleep(2)
 
-    npsso = ""
     try:
+        from cefpython3 import cefpython as cef
+
         sys.excepthook = cef.ExceptHook  # To shutdown all CEF processes on error
 
         settings = {
@@ -33,6 +33,7 @@ def get_npsso_token(auth_params, psnplugin):
         load_handler.is_loaded = False
         browser.SetClientHandler(load_handler)
         browser.SetFocus(True)
+        psnplugin._cef_browser = browser
 
         if platform.system() == "Windows":
             window_handle = browser.GetOuterWindowHandle()
@@ -55,13 +56,13 @@ def get_npsso_token(auth_params, psnplugin):
         cef.Shutdown()
 
         data = json.loads(frame_source_visitor.npsso_token)
-        npsso = data['npsso']
+        psnplugin._npsso_token = data['npsso']
 
     except Exception as e:
         logging.critical(e, exc_info=True)
 
     finally:
-        psnplugin._npsso_token = npsso
+        psnplugin._cef_browser = None
 
 class LoadHandler(object):
     def OnLoadEnd(self, browser, frame, http_code, **_):

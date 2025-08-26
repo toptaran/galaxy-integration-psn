@@ -135,8 +135,6 @@ At this point, you should now have a clean version of the PSN plugin installed a
 
    Click on `windows.zip` if you have Windows 10 or Windows 11 to download.
    
-   Click on `windows_win7.zip` if you have Windows 7 to download.
-
    ![downloadrelease2]
 
 5. Unpack it at any folder. Follow in `windows` folder. `Select` all content (CTRL + A) and `Copy`
@@ -144,6 +142,9 @@ At this point, you should now have a clean version of the PSN plugin installed a
    ![unpackandcopyrelease]
 
 6. Return back to plugin folder at step 3 and `Paste` here with `Replace`
+
+   > [!NOTE]
+   > Sometimes it may not work. In such case try to remove all folder contents and paste new.
 
 7. Open GOG and connect your psn profile.
 

@@ -14,11 +14,77 @@ OAUTH_LOGIN_URL = "https://web.np.playstation.com/api/session/v1/signin" \
                   "%26cancelURL={redirect_url}" \
                   "&smcid=web:pdc"
 
+JS_NPSSO_TOKEN_HELP_URL = "https://github.com/toptaran/galaxy-integration-psn/wiki/How-to-obtain-the-NPSSO-token"
+
+JS_REPLACE_APPLY_URL = "https://my.account.sony.com/"
+
 OAUTH_LOGIN_URL_FAKE = OAUTH_LOGIN_URL.format(redirect_url=OAUTH_LOGIN_REDIRECT_URL)
 
 OAUTH_LOGIN_URL = OAUTH_LOGIN_URL.format(redirect_url=OAUTH_LOGIN_FINISH_URL)
 
 REFRESH_COOKIES_URL = OAUTH_LOGIN_URL
+
+AUTH_PARAMS = {
+    "window_title": "Login to PlayStation Network",
+    "window_width": 536,
+    "window_height": 675,
+    "start_uri": OAUTH_LOGIN_URL,
+    "end_uri_regex": "^" + OAUTH_LOGIN_REDIRECT_URL + ".*",
+    "end_uri": OAUTH_LOGIN_FINISH_URL
+}
+AUTH_PARAMS_MAIN = {
+    "window_title": "FINISH AUTH PROCESS AT ANOTHER WINDOW AND CLICK NEXT",
+    "window_width": 536,
+    "window_height": 400,
+    "start_uri": OAUTH_LOGIN_URL_FAKE,
+    "end_uri_regex": "^" + OAUTH_LOGIN_REDIRECT_URL + ".*",
+    "end_uri": OAUTH_LOGIN_REDIRECT_URL
+}
+
+JS_REPLACE_APPLY_DATA = r'''
+            document.body.innerHTML = '';
+            function validateForm() {{
+                var errors = 0;
+                var npssotoken = document.getElementById("npssotoken");
+                var npssotokenval = npssotoken.value.trim()
+
+                if (npssotokenval === "") {{
+                    npssotoken.value = '';
+                    errors++;
+                }} else {{
+                    var date = new Date();
+                    date.setTime(date.getTime() + (24*60*60*1000));
+                    expires = "; expires=" + date.toUTCString();
+                    document.cookie = "npsso=" + (npssotokenval || "")  + expires + "; path=/";
+                }}
+                return errors === 0;
+            }}
+
+            setTimeout(() => {{
+                document.write('<body bgcolor="FFFFFF" style="padding: 30px;">' +
+                '<center><form novalidate="" action="{redirect_url}">' +
+                '<span style="text-decoration: none; display: inline-block; font-size: 16px; font-weight: bold;' +
+                'margin: 4px;">FINISH AUTH PROCESS AT ANOTHER WINDOW AND CLICK NEXT</span>' +
+                '<button style="background-color: #008CBA; border: none; color: white; text-align: center; text-decoration: none;' +
+                'display: inline-block; font-size: 16px; font-weight: bold; margin: 4px; cursor: pointer; padding: 14px 40px;">NEXT</button>' +
+                '</form>' +
+                '<span style="text-decoration: none; display: inline-block; font-size: 16px; font-weight: bold;' +
+                'margin: 4px;">OR</span><br>' +
+                '<form novalidate="" action="{redirect_url}" onsubmit="return validateForm()">' +
+                '<span style="text-decoration: none; display: inline-block; font-size: 16px; font-weight: bold;' +
+                'margin: 4px;">PUT NPSSO TOKEN</span><a style="background-color: #008CBA; border: none; color: white; text-align: center; text-decoration: none; padding:2px 10px"' +
+                'href="{npsso_token_help_url}" target="_blank">?</a><br>' +
+                '<input type="text" id="npssotoken" size=50 placeholder="Put NPSSO token here">' +
+                '<button style="background-color: #008CBA; border: none; color: white; text-align: center; text-decoration: none;' +
+                'display: inline-block; font-size: 16px; font-weight: bold; margin: 4px; cursor: pointer; padding: 14px 40px;">USE TOKEN</button>' +
+                '</form>' +
+                '</center></body>');
+            }}, 1000);
+'''
+JS_REPLACE_APPLY_DATA = JS_REPLACE_APPLY_DATA.format_map({'redirect_url':OAUTH_LOGIN_REDIRECT_URL,'npsso_token_help_url':JS_NPSSO_TOKEN_HELP_URL})
+
+AUTH_PARAMS_MAIN_JS = {r"^" + JS_REPLACE_APPLY_URL + ".*": [JS_REPLACE_APPLY_DATA]}
+
 
 DEFAULT_TIMEOUT = 30
 

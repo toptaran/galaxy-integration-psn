@@ -140,13 +140,14 @@ At this point, you should now have a clean version of the PSN plugin installed a
 
 7. Return to unpacked repo folder and navigate to `libs` folder.
 
-   `Copy` here `cefpython3.7z` (use `cefpython3_win7.7z` for Windows 7) and `Paste` to plugin fodler from step 3.
+   > [!NOTE]
+   > You may skip this step if you do not want to use custom compiled cefpython3 plugin.
 
-   `Unpack` it here. You can delete `cefpython3.7z` (use `cefpython3_win7.7z` for Windows 7) after unpack.
+   `Copy` here `cefpython3.7z` and `Paste` to plugin fodler from step 3.
+
+   `Unpack` it here. You can delete `cefpython3.7z` after unpack.
 
    `cefpython3.7z` is custom compiled cefpython3 module with chromium version 123.
-
-   `cefpython3_win7.7z` is custom compiled cefpython3 module with chromium version 108.
 
 8. Open GOG and connect your psn profile.
 
