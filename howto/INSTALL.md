@@ -143,8 +143,8 @@ At this point, you should now have a clean version of the PSN plugin installed a
 
 6. Return back to plugin folder at step 3 and `Paste` here with `Replace`
 
-   > [!NOTE]
-   > Sometimes it may not work. In such case try to remove all folder contents and paste new.
+> [!NOTE]
+> Sometimes it may not work. In such case try to remove all folder contents and paste new.
 
 7. Open GOG and connect your psn profile.
 

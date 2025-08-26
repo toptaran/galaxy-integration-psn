@@ -140,8 +140,8 @@ At this point, you should now have a clean version of the PSN plugin installed a
 
 7. Return to unpacked repo folder and navigate to `libs` folder.
 
-   > [!NOTE]
-   > You may skip this step if you do not want to use custom compiled cefpython3 plugin.
+> [!NOTE]
+> You may skip this step if you do not want to use custom compiled cefpython3 plugin.
 
    `Copy` here `cefpython3.7z` and `Paste` to plugin fodler from step 3.
 
