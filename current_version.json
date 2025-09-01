@@ -4,6 +4,10 @@
         {
             "browser_download_url": "https://github.com/toptaran/galaxy-integration-psn/releases/download/v0.39/windows.zip",
             "name": "windows.zip"
+        },
+        {
+            "browser_download_url": "https://github.com/toptaran/galaxy-integration-psn/releases/download/v0.39/macos.zip",
+            "name": "macos.zip"
         }
     ]
 }
