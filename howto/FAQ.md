@@ -13,3 +13,9 @@ Gog has limits how much and how fast games can be added and may not just add it.
 Unfortunately it's gog database problem, looks like it stopped updating. Plugin can only tell what achievement and when unlocked, but sadly cannot neither name no image.
 In such case I advise to write to support and ask to update psn game database. The more of us ask for it the higher chance it will be done.
 
+### Plugin suddenly stopped working, the connect button is gone and the version number is empty or dash character instead of it
+
+Builds until v0.40 was incorrrectly prepeared for GOG autoupdate system.
+
+If you still have this error try to navigate to `%LocalAppData%\GOG.com\Galaxy\plugins\downloaded\` folder and delete all contents inside. Restart GOG.
+
