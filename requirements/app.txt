@@ -1,3 +1,2 @@
-galaxy.plugin.api==0.64
-certifi==2019.3.9
-beautifulsoup4==4.9.3
+galaxy.plugin.api==0.71
+beautifulsoup4==4.12.3

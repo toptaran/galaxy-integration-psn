@@ -1,0 +1,19 @@
+{
+  "titles": [
+    {
+      "titleId": "CUSA01433_00",
+      "name": "Rocket League",
+      "localizedName": "Rocket League®",
+      "category": "ps4_game",
+      "playDuration": "PT10H30M",
+      "lastPlayedDateTime": "2024-08-03T19:28:27.12Z"
+    },
+    {
+      "titleId": "CUSA99999_00",
+      "name": "",
+      "localizedName": "",
+      "category": "unknown"
+    }
+  ],
+  "totalItemCount": 2
+}

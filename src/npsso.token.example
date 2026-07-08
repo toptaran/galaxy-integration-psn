@@ -1,0 +1,3 @@
+# Place your NPSSO token in this file (single line, no quotes).
+# Get it from https://ca.account.sony.com/api/v1/ssocookie after signing in at store.playstation.com
+# Rename this file to npsso.token (remove .example) in the installed plugin folder.

@@ -1,0 +1,10 @@
+{
+  "data": {
+    "gameLibraryTitlesRetrieve": {
+      "games": [
+        {"titleId": "CUSA67890_00", "name": "Test Game Two"},
+        {"titleId": "CUSA11111_00", "name": "Played Only Game"}
+      ]
+    }
+  }
+}

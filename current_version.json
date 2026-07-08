@@ -1,12 +1,12 @@
 {
-    "tag_name": "v0.35",
+    "tag_name": "v1.1.0",
     "assets": [
         {
-            "browser_download_url": "https://github.com/FriendsOfGalaxy/galaxy-integration-psn/releases/download/v0.35/windows.zip",
+            "browser_download_url": "https://github.com/FriendsOfGalaxy/galaxy-integration-psn/releases/download/v1.1.0/windows.zip",
             "name": "windows.zip"
         },
         {
-            "browser_download_url": "https://github.com/FriendsOfGalaxy/galaxy-integration-psn/releases/download/v0.35/macos.zip",
+            "browser_download_url": "https://github.com/FriendsOfGalaxy/galaxy-integration-psn/releases/download/v1.1.0/macos.zip",
             "name": "macos.zip"
         }
     ]

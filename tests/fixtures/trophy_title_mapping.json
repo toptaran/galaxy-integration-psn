@@ -1,0 +1,38 @@
+{
+  "titles": [
+    {
+      "npTitleId": "CUSA37191_00",
+      "trophyTitles": []
+    },
+    {
+      "npTitleId": "PPSA07632_00",
+      "trophyTitles": [
+        {
+          "npServiceName": "trophy2",
+          "npCommunicationId": "NPWR29410_00",
+          "trophyTitleName": "SAROS",
+          "trophyTitlePlatform": "PS5",
+          "rarestTrophies": [
+            {
+              "trophyId": 43,
+              "trophyName": "Vincible",
+              "earned": true,
+              "earnedDateTime": "2026-06-08T01:34:37Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "npTitleId": "CUSA03283_00",
+      "trophyTitles": [
+        {
+          "npServiceName": "trophy",
+          "npCommunicationId": "NPWR13239_00",
+          "trophyTitleName": "Maize",
+          "trophyTitlePlatform": "PS4"
+        }
+      ]
+    }
+  ]
+}
