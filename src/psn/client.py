@@ -3,18 +3,30 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from galaxy.api.errors import UnknownBackendResponse
+import aiohttp
+from galaxy.api.errors import (
+    AccessDenied,
+    AuthenticationRequired,
+    BackendError,
+    BackendNotAvailable,
+    BackendTimeout,
+    NetworkError,
+    TooManyRequests,
+    UnknownBackendResponse,
+)
 from galaxy.api.types import Achievement, GameTime, SubscriptionGame, UserInfo
 
 from psn.constants import (
+    ACCOUNT_ME_URL,
     DEFAULT_PAGE_SIZE,
     FRIENDS_PAGE_SIZE,
     PLAYED_GAMES_PAGE_SIZE,
     PSN_PLUS_SUBSCRIPTIONS_URL,
+    TROPHY_FETCH_CONCURRENCY,
     TROPHY_TITLES_PAGE_SIZE,
 )
 from psn.duration import parse_play_duration
-from psn.graphql import played_games_url, profile_url, purchased_games_url
+from psn.graphql import played_games_url, purchased_games_url
 from psn.library_utils import (
     alias_context_by_siblings,
     build_concept_siblings,
@@ -44,6 +56,20 @@ STORE_TITLE_PREFIXES = ("CUSA", "PPSA", "PCSE", "PCSA")
 
 FRIENDS_PROFILE_BATCH = 8
 
+# Errors where the fetch outcome is unknown: re-raise so Galaxy reports a
+# per-game failure and retries next sync, instead of recording "no trophies".
+TRANSIENT_TROPHY_ERRORS = (
+    AccessDenied,
+    AuthenticationRequired,
+    BackendError,
+    BackendNotAvailable,
+    BackendTimeout,
+    NetworkError,
+    TooManyRequests,
+    TimeoutError,
+    aiohttp.ClientError,
+)
+
 
 @dataclass
 class AchievementsContext:
@@ -61,23 +87,43 @@ class PSNClient:
     def __init__(self, http_client):
         self._http_client = http_client
         self._played_games_cache: Optional[List[Dict[str, Any]]] = None
+        self._account_id: Optional[str] = None
+        self._own_profile_cache: Optional[Dict[str, Any]] = None
         self._trophy_title_index: Dict[str, Dict[str, str]] = {}
         self._concept_siblings: Dict[str, List[str]] = {}
+        self._trophy_semaphore = asyncio.Semaphore(TROPHY_FETCH_CONCURRENCY)
+
+    def set_account_id(self, account_id: str):
+        self._account_id = str(account_id)
+
+    async def _get_account_id(self) -> str:
+        if not self._account_id:
+            account = await self._http_client.api_get(ACCOUNT_ME_URL)
+            self._account_id = str(account["accountId"])
+        return self._account_id
+
+    async def get_own_profile(self) -> Dict[str, Any]:
+        # The userProfile API rejects the literal "me" ("Bad Request (path:
+        # accountId)"); it needs the numeric account id.
+        if self._own_profile_cache is None:
+            account_id = await self._get_account_id()
+            self._own_profile_cache = await self._http_client.api_get(
+                rest_profile_url(account_id)
+            )
+        return self._own_profile_cache
 
     async def get_own_user_info(self) -> Tuple[str, str]:
-        response = await self._http_client.graphql_get(profile_url())
-        logger.debug("user profile data: %s", response)
+        account_id = await self._get_account_id()
+        profile = await self.get_own_profile()
         try:
-            profile = response["data"]["oracleUserProfileRetrieve"]
-            return profile["accountId"], profile["onlineId"]
+            return account_id, profile["onlineId"]
         except (KeyError, TypeError) as exc:
             raise UnknownBackendResponse(str(exc)) from exc
 
     async def get_psplus_status(self) -> bool:
         try:
-            response = await self._http_client.graphql_get(profile_url())
-            status = response["data"]["oracleUserProfileRetrieve"]["isPsPlusMember"]
-            return bool(status)
+            profile = await self.get_own_profile()
+            return bool(profile["isPlus"])
         except Exception:
             logger.warning(
                 "Could not determine PS Plus status (profile API unavailable)",
@@ -374,6 +420,8 @@ class PSNClient:
                             trophy_set.get("npServiceName") or "trophy",
                         )
                     )
+                except TRANSIENT_TROPHY_ERRORS:
+                    raise
                 except Exception:
                     logger.debug(
                         "Could not fetch trophies for %s (%s)",
@@ -389,6 +437,8 @@ class PSNClient:
         np_service = meta.get("npServiceName") or "trophy"
         try:
             return await self._load_np_comm_achievements(game_id, np_service)
+        except TRANSIENT_TROPHY_ERRORS:
+            raise
         except Exception:
             logger.debug("Could not fetch trophies for %s", game_id, exc_info=True)
             return []
@@ -441,26 +491,30 @@ class PSNClient:
         if not context.trophy_title_index and self._trophy_title_index:
             context.trophy_title_index = dict(self._trophy_title_index)
 
-        achievements = await self._fetch_achievements_for_title(game_id)
         aliased_from = None
-        self._cache_achievements_for_siblings(context, game_id, achievements)
+        # Galaxy requests every game's trophies at once; bound the fan-out so
+        # requests don't starve the connection pool and time out.
+        async with self._trophy_semaphore:
+            if game_id not in context.cache:
+                achievements = await self._fetch_achievements_for_title(game_id)
+                self._cache_achievements_for_siblings(context, game_id, achievements)
 
-        if not achievements:
-            for sibling_id in context.concept_siblings.get(game_id, []):
-                if sibling_id not in context.cache:
-                    sibling_achievements = await self._fetch_achievements_for_title(
-                        sibling_id
-                    )
-                    self._cache_achievements_for_siblings(
-                        context, sibling_id, sibling_achievements
-                    )
-                sibling_achievements = context.cache.get(sibling_id) or []
-                if sibling_achievements:
-                    aliased_from = sibling_id
-                    self._cache_achievements_for_siblings(
-                        context, game_id, sibling_achievements
-                    )
-                    break
+                if not achievements:
+                    for sibling_id in context.concept_siblings.get(game_id, []):
+                        if sibling_id not in context.cache:
+                            sibling_achievements = (
+                                await self._fetch_achievements_for_title(sibling_id)
+                            )
+                            self._cache_achievements_for_siblings(
+                                context, sibling_id, sibling_achievements
+                            )
+                        sibling_achievements = context.cache.get(sibling_id) or []
+                        if sibling_achievements:
+                            aliased_from = sibling_id
+                            self._cache_achievements_for_siblings(
+                                context, game_id, sibling_achievements
+                            )
+                            break
 
         result = context.cache.get(game_id, [])
         if result:

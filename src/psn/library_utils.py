@@ -154,7 +154,12 @@ def expand_concept_sibling_skus(
     entries: List[Dict[str, str]],
     siblings: Dict[str, List[str]],
 ) -> List[Dict[str, str]]:
-    """Re-add CUSA/PPSA sibling SKUs so Galaxy can match GOG catalog IDs."""
+    """Re-add CUSA/PPSA sibling SKUs so Galaxy can match GOG catalog IDs.
+
+    Real library entries always come first; sibling SKUs are appended after
+    them so Galaxy's ordered backend ingestion processes real games before
+    the redundant matching SKUs.
+    """
     known = {entry["titleId"] for entry in entries if entry.get("titleId")}
     expanded = list(entries)
     for entry in entries:

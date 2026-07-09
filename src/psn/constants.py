@@ -49,20 +49,15 @@ PLAYED_GAME_LIST_URL = (
     '"sha256Hash":"e780a6d8b921ef0c59ec01ea5c5255671272ca0d819edb61320914cf7a78b3ae"}}}}'
 )
 
-USER_INFO_URL = (
-    "https://web.np.playstation.com/api/graphql/v1/op"
-    "?operationName=getProfileOracle"
-    "&variables={}"
-    '&extensions={"persistedQuery":{"version":1,'
-    '"sha256Hash":"c17b8b45ac988fec34e6a833f7a788edf7857c900fc3dc116585ced48577fb05"}}'
-)
-
 PSN_PLUS_SUBSCRIPTIONS_URL = "https://store.playstation.com/subscriptions"
 
 DEFAULT_PAGE_SIZE = 24
 PLAYED_GAMES_PAGE_SIZE = 200
 TROPHY_TITLES_PAGE_SIZE = 800
 TROPHY_BATCH_SIZE = 5
+# Below galaxy.http's connector limit (20) so queued requests don't
+# exhaust the 30s total timeout while waiting for a connection.
+TROPHY_FETCH_CONCURRENCY = 10
 FRIENDS_PAGE_SIZE = 2000
 
 USER_GAMES_API_BASE = "https://m.np.playstation.com/api/gamelist/v2/users"
@@ -70,6 +65,7 @@ TROPHY_API_BASE = "https://m.np.playstation.com/api/trophy"
 USER_PROFILE_API_BASE = (
     "https://m.np.playstation.com/api/userProfile/v1/internal/users"
 )
+ACCOUNT_ME_URL = "https://dms.api.playstation.com/api/v1/devices/accounts/me"
 
 # Legacy Sony sign-in page — blocked in embedded browsers.
 AUTH_PARAMS = {

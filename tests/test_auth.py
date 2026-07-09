@@ -1,7 +1,8 @@
 import asyncio
 import re
+from types import SimpleNamespace
 
-from psn.auth import npsso_from_end_uri, npsso_token_file_path
+from psn.auth import PSNAuthenticator, npsso_from_end_uri, npsso_token_file_path
 from psn.local_server import DONE_PATH, LocalAuthServer
 
 
@@ -57,6 +58,32 @@ def test_local_server_serves_form_and_captures_token():
             await server.stop()
 
     asyncio.run(run())
+
+
+def test_on_cookies_updated_skips_unchanged_payload():
+    stored = []
+    authenticator = PSNAuthenticator(None, None, stored.append)
+    morsels = [SimpleNamespace(key="session", value="abc")]
+
+    authenticator._on_cookies_updated(morsels)
+    authenticator._on_cookies_updated(morsels)
+    authenticator._on_cookies_updated([SimpleNamespace(key="session", value="def")])
+
+    assert len(stored) == 2
+    assert stored[0]["cookies"] == {"session": "abc"}
+    assert stored[1]["cookies"] == {"session": "def"}
+
+
+def test_on_cookies_updated_preserves_tokens_and_captures_npsso():
+    stored = []
+    authenticator = PSNAuthenticator(None, None, stored.append)
+    authenticator._stored_payload = {"access_token": "at", "npsso": "old"}
+
+    authenticator._on_cookies_updated([SimpleNamespace(key="npsso", value="new")])
+
+    assert stored == [
+        {"access_token": "at", "npsso": "new", "cookies": {"npsso": "new"}}
+    ]
 
 
 def test_local_server_end_uri_regex_matches_playstation():

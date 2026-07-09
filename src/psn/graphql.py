@@ -10,9 +10,6 @@ PURCHASED_GAMES_HASH = (
 PLAYED_GAMES_HASH = (
     "e780a6d8b921ef0c59ec01ea5c5255671272ca0d819edb61320914cf7a78b3ae"
 )
-PROFILE_HASH = (
-    "c17b8b45ac988fec34e6a833f7a788edf7857c900fc3dc116585ced48577fb05"
-)
 
 
 def build_graphql_url(operation_name: str, variables: Dict[str, Any], sha256_hash: str) -> str:
@@ -50,7 +47,3 @@ def played_games_url(limit: int) -> str:
         {"categories": "ps4_game,ps5_native_game", "limit": limit},
         PLAYED_GAMES_HASH,
     )
-
-
-def profile_url() -> str:
-    return build_graphql_url("getProfileOracle", {}, PROFILE_HASH)

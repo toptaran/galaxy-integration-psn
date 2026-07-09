@@ -1,4 +1,3 @@
-import pytest
 
 from psn.trophies import extract_store_title_mappings, format_achievement_id, merge_earned_with_definitions
 

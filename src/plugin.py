@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import sys
 
@@ -18,7 +19,6 @@ from galaxy.api.types import (
     GameTime,
     LicenseInfo,
     Subscription,
-    SubscriptionGame,
     UserInfo,
 )
 
@@ -40,6 +40,7 @@ class PSNPlugin(Plugin):
             self._psn_client,
             self.store_credentials,
         )
+        self._owned_games_import: asyncio.Event | None = None
         logging.getLogger("urllib3").setLevel(logging.FATAL)
 
     async def authenticate(self, stored_credentials=None):
@@ -51,6 +52,19 @@ class PSNPlugin(Plugin):
         )
 
     async def get_subscriptions(self) -> List[Subscription]:
+        # Galaxy's import collector expects owned games before subscriptions;
+        # answering earlier trips "Invalid GameImportCollector transition
+        # 'ImportedOwnedReleases' from state 'ImportingSubscriptions'" and the
+        # sync's collected games are dropped.
+        pending_owned_import = self._owned_games_import
+        if pending_owned_import is not None and not pending_owned_import.is_set():
+            try:
+                await asyncio.wait_for(pending_owned_import.wait(), timeout=60)
+            except TimeoutError:
+                logger.warning(
+                    "Owned games import still running; answering subscriptions anyway"
+                )
+
         is_plus_active = await self._psn_client.get_psplus_status()
         return [
             Subscription(
@@ -63,7 +77,19 @@ class PSNPlugin(Plugin):
     async def get_subscription_games(
         self, subscription_name: str, context: Any
     ):
-        yield await self._psn_client.get_subscription_games()
+        # The SDK importer awaits this method and iterates the result, so it
+        # must be a coroutine returning an async iterator, not an async
+        # generator itself.
+        try:
+            games = await self._psn_client.get_subscription_games()
+        except Exception:
+            logger.warning("Could not fetch PS Plus games", exc_info=True)
+            games = []
+
+        async def pages():
+            yield games
+
+        return pages()
 
     async def _ensure_authenticated(self):
         if self._http_client._access_token:
@@ -74,17 +100,21 @@ class PSNPlugin(Plugin):
             await self._authenticator._authenticate_with_npsso(npsso)
 
     async def get_owned_games(self):
-        await self._ensure_authenticated()
-        titles = await self._psn_client.get_all_library_titles()
-        return [
-            Game(
-                game_id=title["titleId"],
-                game_title=title["name"],
-                dlcs=[],
-                license_info=LicenseInfo(LicenseType.SinglePurchase, None),
-            )
-            for title in titles
-        ]
+        self._owned_games_import = asyncio.Event()
+        try:
+            await self._ensure_authenticated()
+            titles = await self._psn_client.get_all_library_titles()
+            return [
+                Game(
+                    game_id=title["titleId"],
+                    game_title=title["name"],
+                    dlcs=[],
+                    license_info=LicenseInfo(LicenseType.SinglePurchase, None),
+                )
+                for title in titles
+            ]
+        finally:
+            self._owned_games_import.set()
 
     async def prepare_game_times_context(self, game_ids: List[str]) -> Any:
         await self._ensure_authenticated()

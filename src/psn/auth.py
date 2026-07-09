@@ -74,6 +74,8 @@ class PSNAuthenticator:
         payload["cookies"] = cookies
         if cookies.get("npsso"):
             payload["npsso"] = cookies["npsso"]
+        if payload == self._stored_payload:
+            return
         self._stored_payload = payload
         self._store_credentials(payload)
 
@@ -163,13 +165,13 @@ class PSNAuthenticator:
             raise InvalidCredentials()
 
         logger.info("Authenticating with NPSSO token")
-        self.configure_cookie_persistence()
         self._http_client.update_cookies({"npsso": npsso}, url=SONY_ACCOUNT_URL)
 
         try:
             await self._http_client.get(NPSSO_COOKIE_URL, silent=True, get_json=False)
             tokens = await exchange_npsso_for_tokens(self._http_client, npsso)
             self._http_client.set_access_token(tokens["access_token"])
+            self._seed_account_id(tokens.get("id_token"))
             await self._http_client.refresh_cookies()
             auth = await self._build_authentication(tokens.get("id_token"))
         except InvalidCredentials:
@@ -195,8 +197,20 @@ class PSNAuthenticator:
                 "id_token": tokens.get("id_token"),
             }
         )
+        # Attach only after auth succeeds, so the handshake's intermediate
+        # Set-Cookie responses don't flood Galaxy with store_credentials calls.
+        self.configure_cookie_persistence()
         logger.info("NPSSO authentication succeeded for user %s", auth.user_name)
         return auth
+
+    def _seed_account_id(self, id_token: Optional[str]):
+        if not id_token:
+            return
+        try:
+            account_id, _ = user_info_from_id_token(id_token)
+            self._psn_client.set_account_id(account_id)
+        except Exception:
+            logger.debug("Could not read account id from id_token", exc_info=True)
 
     def _current_cookies(self) -> Dict[str, str]:
         return {
@@ -209,7 +223,7 @@ class PSNAuthenticator:
             if user_id:
                 return Authentication(user_id=user_id, user_name=user_name)
         except Exception:
-            logger.warning("GraphQL profile lookup failed, trying id_token fallback")
+            logger.warning("Profile lookup failed, trying id_token fallback")
 
         if id_token:
             user_id, user_name = user_info_from_id_token(id_token)

@@ -67,8 +67,9 @@ class HttpClient:
             raise AuthenticationRequired("PlayStation access token is missing")
 
         headers = {**GRAPHQL_HEADERS, **self._auth_headers()}
-        response = await self._api_session.get(url, headers=headers)
-        body = await response.text()
+        with handle_exception():
+            response = await self._api_session.get(url, headers=headers)
+            body = await response.text()
         if response.status == 404 and not_found_ok:
             logger.debug("%s not found (404): %s", label, url)
             return None

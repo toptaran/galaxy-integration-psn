@@ -39,6 +39,25 @@ def test_expand_concept_sibling_skus():
     }
 
 
+def test_expand_concept_sibling_skus_appends_siblings_after_real_entries():
+    # Galaxy ingests release keys in order, so real library entries must all
+    # come before any expanded sibling SKUs.
+    entries = [
+        {"titleId": "PPSA00001_00", "name": "Game A", "conceptId": "1"},
+        {"titleId": "PPSA00002_00", "name": "Game B", "conceptId": "2"},
+    ]
+    siblings = {
+        "PPSA00001_00": ["CUSA00001_00"],
+        "PPSA00002_00": ["CUSA00002_00"],
+    }
+    expanded = expand_concept_sibling_skus(entries, siblings)
+    assert [entry["titleId"] for entry in expanded[:2]] == [
+        "PPSA00001_00",
+        "PPSA00002_00",
+    ]
+    assert len(expanded) == 4
+
+
 def test_enrich_purchased_concept_ids():
     purchased = [{"titleId": "CUSA36463_00", "name": "Bluey", "source": "purchased"}]
     played = [
