@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function() {{
     </div>
   </div>
 
-  <form action="{done_path}" method="get" autocomplete="off">
+  <form action="{done_path}" method="post" autocomplete="off">
     <label class="field-label" for="npsso">3. Paste token (<span id="paste-key"></span>)</label>
     <input id="npsso" name="npsso" type="text" placeholder="64-character token" autofocus>
     <button type="submit">Connect</button>
@@ -180,7 +180,7 @@ class LocalAuthServer:
         self.captured_npsso = None
         app = web.Application()
         app.router.add_get("/", self._handle_form)
-        app.router.add_get(DONE_PATH, self._handle_done)
+        app.router.add_post(DONE_PATH, self._handle_done)
         app.router.add_get(OPEN_PATH, self._handle_open)
 
         self._runner = web.AppRunner(app)
@@ -222,7 +222,8 @@ class LocalAuthServer:
         return web.Response(status=204)
 
     async def _handle_done(self, request):
-        token = (request.query.get("npsso") or "").strip()
+        data = await request.post()
+        token = (data.get("npsso") or "").strip()
         if not token:
             return web.Response(
                 text=_MISSING_TOKEN_HTML, content_type="text/html", status=400
