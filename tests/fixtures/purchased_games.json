@@ -1,0 +1,13 @@
+{
+  "data": {
+    "purchasedTitlesRetrieve": {
+      "games": [
+        {"titleId": "CUSA12345_00", "name": "Test Game One"},
+        {"titleId": "CUSA67890_00", "name": "Test Game Two"}
+      ],
+      "pageInfo": {
+        "totalCount": 2
+      }
+    }
+  }
+}

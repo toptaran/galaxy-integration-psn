@@ -1,0 +1,9 @@
+{
+  "data": {
+    "oracleUserProfileRetrieve": {
+      "accountId": "1234567890",
+      "onlineId": "TestPlayer",
+      "isPsPlusMember": true
+    }
+  }
+}
